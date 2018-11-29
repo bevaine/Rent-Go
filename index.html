@@ -1,0 +1,252 @@
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Rent&GO</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="stylesheet" href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,700">
+    <link rel="stylesheet" href="./jquery.mobile-1.4.5.min.css">
+    <link rel="stylesheet" href="./index.css">
+    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU" type="text/javascript"></script>
+    <script src="./jquery.js"></script>
+    <script src="./index.js"></script>
+    <script src="./jquery.mobile-1.4.5.min.js"></script>
+    <style>
+        .tab-content {
+            display:none;
+        }
+        .tab-content:first-child {
+            display:block;
+        }
+    </style>
+    <script>
+        ymaps.ready(init);
+        function init() {
+            var suggestView1 = new ymaps.SuggestView('street');
+        }
+
+        function changeTab(tab)
+        {
+            const selTab = $('.ui-navbar a[href="#' + tab + '"]');
+            selTab.closest('.ui-navbar')
+                .find('a')
+                .removeClass('ui-btn-active');
+
+            selTab.addClass('ui-btn-active');
+
+            $('#' + selTab.attr('data-href'))
+                .show()
+                .siblings('.tab-content')
+                .hide();
+            return false;
+        }
+
+        $(window).on('load', function()
+        {
+            var url = document.location.toString();
+
+            if (url.match('#')) {
+                var tab = url.split('#')[1];
+            } else return false;
+
+            changeTab(tab);
+        });
+
+        $(document).delegate('.ui-navbar ul li > a', 'click', function(e)
+        {
+            e.preventDefault();
+            var tab = $(this).attr('data-href');
+            changeTab(tab);
+        });
+
+        $(document).delegate('a[id=add-button]', "click", function(e)
+        {
+            console.log('qw');
+
+            var data = new FormData();
+
+            var params = $('#form').serializeArray();
+            $.each(params, function (i, val) {
+                data.append(val.name, val.value);
+            });
+
+            $.each($('input[id=imageFiles]')[0].files, function(i, file) {
+                data.append('RegisterObjects[imageFiles][' + i + ']', file);
+            });
+
+            jQuery.ajax({
+                url: 'http://itr-local.api/rent/add',
+                data: data,
+                cache: false,
+                contentType: false,
+                processData: false,
+                method: 'POST',
+                type: 'POST',
+                success: function(data){
+                    console.log(data);
+                    if (data !== 'null' && data.msg !== undefined) {
+                        $('.add-info').html(data.msg);
+                        $("#popupArrow").popup("open");
+                    }
+                }
+            });
+        });
+
+        $(document).delegate("a[id=add_object],a[id=return_object]", "click", function(e)
+        {
+            switchMainAdd();
+        });
+
+        /**
+         *
+         */
+        function switchMainAdd()
+        {
+            if ($("#tab1-button-add").is(":visible")) {
+                $("#tab1-body-obj").hide("slow");
+                $("#tab1-button-add").hide("slow");
+                $("#tab1-button-return").show("slow");
+                $("#tab1-body-add").show("slow");
+            } else {
+                $("#tab1-body-obj").show("slow");
+                $("#tab1-button-add").show("slow");
+                $("#tab1-body-add").hide("slow");
+                $("#tab1-button-return").hide("slow");
+            }
+        }
+
+        var getUrlParameter = function getUrlParameter(sParam) {
+            var sPageURL = decodeURIComponent(window.location.search.substring(1)),
+                sURLVariables = sPageURL.split('&'),
+                sParameterName,
+                i;
+
+            for (i = 0; i < sURLVariables.length; i++) {
+                sParameterName = sURLVariables[i].split('=');
+
+                if (sParameterName[0] === sParam) {
+                    return sParameterName[1] === undefined ? true : sParameterName[1];
+                }
+            }
+        };
+
+    </script>
+</head>
+<body>
+    <div id="tab1" class="tab-content">
+
+        <!--Заголовок-->
+        <div id="tab1-header" data-role="header" role="banner" class="ui-header ui-bar-inherit">
+            <div style="padding: 12px" align="center" id="header_title">Объекты недвижимости</div>
+            <div id="tab1-button-add" class="ui-nodisc-icon ui-alt-icon">
+                <a href="#" id="add_object" class="ui-btn-right ui-btn ui-shadow ui-corner-all ui-icon-plus ui-btn-icon-notext ui-btn-inline"></a>
+            </div>
+            <div id="tab1-button-return" class="ui-nodisc-icon ui-alt-icon" style="display:none;">
+                <a href="#" id="return_object" class="ui-btn-left ui-btn ui-shadow ui-corner-all ui-icon-carat-l ui-btn-icon-notext ui-btn-inline"></a>
+            </div>
+        </div>
+
+        <!--Главная страница-->
+        <div id="tab1-body-obj" role="main" class="ui-content" style="display:block;">
+            тест
+        </div>
+
+        <!--Страница добавления-->
+        <div id="tab1-body-add" role="main" class="ui-content" style="display:none;">
+
+            <form action="" method="post" enctype="multipart/form-data" id="form">
+
+                <label for="street">Адрес</label>
+                <input type="search" data-clear-btn="true" name="RegisterObjects[street]" id="street" value="">
+
+                <label for="flat" class="select">Количество комнат</label>
+                <select name="RegisterObjects[flat]" id="flat" data-native-menu="false">
+                    <option>Выбирите значение</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                    <option value="5">5</option>
+                    <option value="many">6 и более</option>
+                    <option value="free">Свободная планировка</option>
+                    <option value="studio">Студия</option>
+                </select>
+
+                <label for="repair" class="select">Ремонт</label>
+                <select name="RegisterObjects[repair]" id="repair" data-native-menu="false">
+                    <option>Выбирите значение</option>
+                    <option value="1">Косметический</option>
+                    <option value="2">Дизайнерский</option>
+                    <option value="3">Евро</option>
+                    <option value="4">Отсутсвует</option>
+                </select>
+
+                <label for="floor">Этаж</label>
+                <input type="range" name="RegisterObjects[floor]" id="floor" value="1" min="1" max="100" data-highlight="true">
+
+                <label for="area-all">Общая площадь</label>
+                <input type="range" name="RegisterObjects[area_all]" id="area-all" value="1" min="1" max="1000" data-highlight="true">
+
+                <label for="area-kitchen">Площадь кухни</label>
+                <input type="range" name="RegisterObjects[area_kitchen]" id="area-kitchen" value="1" min="1" max="1000" data-highlight="true">
+
+                <fieldset data-role="controlgroup" data-type="horizontal">
+                        <legend>Санузел</legend>
+                        <input type="radio" name="RegisterObjects[bathroom]" id="bathroom1" value="1" checked="checked">
+                        <label for="bathroom1">Раздельный</label>
+                        <input type="radio" name="RegisterObjects[bathroom]" id="bathroom2" value="2">
+                        <label for="bathroom2">Совмещенный</label>
+                </fieldset>
+
+                <fieldset data-role="controlgroup" data-type="horizontal">
+                    <legend>Лифт</legend>
+                    <input type="checkbox" name="RegisterObjects[lift_pass]" id="lift_pass" value="1">
+                    <label for="lift_pass">Пассажирский</label>
+                    <input type="checkbox" name="RegisterObjects[lift_cargo]" id="lift_cargo" value="2">
+                    <label for="lift_cargo">Грузовой</label>
+                </fieldset>
+
+                <label for="other_inf">Другое</label>
+                <textarea cols="15" rows="3" name="RegisterObjects[other_inf]" id="other_inf"></textarea>
+                <label for="imageFiles">Добавить фото</label>
+                <input type="file" data-clear-btn="true" name="RegisterObjects[imageFiles][]" id="imageFiles" value="" multiple="multiple" accept="image/*">
+
+                <a href="#" data-position-to="window" class="ui-shadow ui-btn ui-corner-all" id="add-button">Добавить</a>
+                <div data-theme="a" class="ui-corner-all" data-role="popup" id="popupArrow" data-arrow="true">
+                    <div style="padding:10px 20px;">
+                        <div class="add-info" id="add-info"></div>
+                        <a onclick="window.location.reload(true);" href="#tab1" class="ui-btn ui-shadow ui-corner-all ui-icon-check ui-btn-icon-notext ui-btn-inline">Check</a>
+                    </div>
+                </div>
+
+            </form>
+
+        </div>
+
+        <div data-role="footer"></div>
+    </div>
+
+    <div id="tab2" class="tab-content">
+        Аренда
+    </div>
+
+    <div id="tab3" class="tab-content">
+        Отчеты
+    </div>
+
+    <div id="tab4" class="tab-content">
+        Профиль
+    </div>
+
+    <!--Навигация-->
+    <div data-role="navbar">
+        <ul>
+            <li><a href="#tab1" data-href="tab1" class="ui-btn ui-btn-inline ui-icon-home ui-btn-icon-top ui-btn-active">Объекты</a></li>
+            <li><a href="#tab2" data-href="tab2" class="ui-btn ui-btn-inline ui-icon-action ui-btn-icon-top">Аренда</a></li>
+            <li><a href="#tab3" data-href="tab3" class="ui-btn ui-btn-inline ui-icon-bars ui-btn-icon-top">Отчеты</a></li>
+            <li><a href="#tab4" data-href="tab4" class="ui-btn ui-btn-inline ui-icon-user ui-btn-icon-top">Профиль</a></li>
+        </ul>
+    </div>
+
+</body>
+</html>
